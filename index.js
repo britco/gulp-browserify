@@ -8,11 +8,11 @@ var through = require('through'),
 // Main export function.. Call either using gulpBrowserify(app.js) or opts {
 // filename: app.js }
 function gulpBrowserify(opts) {
-	if(typeof(opts) != 'object') {
-		opts = {
-			'filename': opts
-		};
+	if(typeof(opts) !== 'object') {
+		opts = {};
+		opts.filename = filename;
 	}
+
 	if (!opts) opts = {};
 	if (!opts.newLine) opts.newLine = gutil.linefeed;
 
