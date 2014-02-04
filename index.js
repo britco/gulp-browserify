@@ -24,6 +24,10 @@ function gulpBrowserify(opts) {
 		opts.filename += '.js';
 	}
 
+	// Now strip filename from browserify opts..
+	filename = opts.filename;
+	delete opts.filename;
+
 	var files = [];
 	var firstFile = null;
 
@@ -60,10 +64,10 @@ function gulpBrowserify(opts) {
 		// Require each file
 		files.forEach(function(file,index) {
 			var dirname = path.dirname(file);
-			bundler.require(file, {
-				basedir: dirname,
-				paths: [dirname]
-			});
+
+			var expose = '';
+
+			bundler.require(file);
 		});
 
 		// Build the bundle now
@@ -76,8 +80,6 @@ function gulpBrowserify(opts) {
 			}
 
 			// Output the ending file
-			filename = opts.filename;
-
 			var fileopts = {
 				cwd: __dirname,
 				base: __dirname,
