@@ -13,6 +13,7 @@
     "through2": "~0.4.1",
     "browserify": "~3.24.11",
     "stream-combiner": "0.0.4",
-    "through": "~2.3.4"
+    "through": "~2.3.4",
+    "underscore": "~1.5.2"
   }
 }

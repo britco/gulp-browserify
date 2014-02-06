@@ -4,35 +4,53 @@ var through = require('through'),
     gutil = require('gulp-util');
 	PluginError = gutil.PluginError;
 	File = gutil.File;
+	_ = require('underscore');
 
 // Main export function.. Call either using gulpBrowserify(app.js) or opts {
 // filename: app.js }
+// opts:
+// filename: x
+// maskFilenames: true
+// .. any other browserify options
 function gulpBrowserify(opts) {
+	if (!opts) opts = {};
+
+	// Accept single string format
 	if(typeof(opts) !== 'object') {
 		opts = {};
 		opts.filename = filename;
 	}
 
-	if (!opts) opts = {};
-	if (!opts.newLine) opts.newLine = gutil.linefeed;
+	// Default options..
+	defaultFilename = 'bundle-';
+	defaultFilename += Math.random().toString(36).substr(3,3);
+	defaultFilename += String(new Date().getTime()).substr(4,3);
+	defaultFilename += '.js';
 
-	// Default filename..
-	if(!opts.filename){
-		opts.filename = 'bundle-';
-		opts.filename += Math.random().toString(36).substr(3,3);
-		opts.filename += String(new Date().getTime()).substr(4,3);
-		opts.filename += '.js';
-	}
+	_.defaults(opts, {
+		filename: defaultFilename,
+		maskFilenames: true
+	});
 
-	// Now strip filename from browserify opts..
 	filename = opts.filename;
-	delete opts.filename;
+
+	var funcArgs = ['maskFilenames','filename'];
+
+	// Get an option list for browserify
+	var browserifyOpts = {};
+	Object.keys(opts).forEach(function(key) {
+		value = opts[key];
+
+		if(!_.contains(funcArgs,key)) {
+			browserifyOpts[key] = value;
+		}
+	});
 
 	var files = [];
 	var firstFile = null;
 
 	// Main browserify object
-	var bundler = browserify(opts);
+	var bundler = browserify(browserifyOpts);
 
 	// Error wrapping
 	function newError(e) {
@@ -65,9 +83,14 @@ function gulpBrowserify(opts) {
 		files.forEach(function(file,index) {
 			var dirname = path.dirname(file);
 
-			var expose = '';
+			var requireOpts = {};
 
-			bundler.require(file);
+			// Mask the actual filename
+			// if(opts.maskFilenames) {
+			// 	requireOpts.expose = Math.random().toString(36).substr(3,3);
+			// }
+
+			bundler.add(file, requireOpts);
 		});
 
 		// Build the bundle now
