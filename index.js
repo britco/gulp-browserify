@@ -31,34 +31,32 @@ function addFiles(file){
 		));
 	}
 
-	if (!this._firstFile) this._firstFile = file;
+	this._data = this._data || {};
 
-	var files = this.files || [];
+	if (!this._data.firstFile) this._data.firstFile = file;
 
-	files.push(file.path);
+	if(!_.has(this._data,'files')) this._data.files = [];
+
+	this._data.files.push(file.path);
 }
 
 function endStream(files) {
-	var me = this;
-
-	console.log('files', files);
-
+    files = this._data.files;
 	if (files.length === 0) return this.emit('end');
 
-	return endStreamFn();
+	return endStreamFn.apply(this);
 }
 
+// Function that is called once endStream is called
 function waitForStream(callback) {
-	this.endStreamFn = callback;
+	endStreamFn = callback;
 }
 
-// Main export function.. Call either using gulpBrowserify(app.js) or opts {
-// filename: app.js }
-// opts:
-// filename: x
-// maskFilenames: true
-// .. any other browserify options
-function __main(opts) {
+// Build function, called from __main
+function build(opts) {
+	// Stream data
+	var data = this._data;
+
 	if (!opts) opts = {};
 
 	// Accept single string format
@@ -68,10 +66,7 @@ function __main(opts) {
 	}
 
 	// Default options..
-	defaultFilename = 'bundle-';
-	defaultFilename += Math.random().toString(36).substr(3,3);
-	defaultFilename += String(new Date().getTime()).substr(4,3);
-	defaultFilename += '.js';
+	defaultFilename = 'bundle.js';
 
 	_.defaults(opts, {
 		filename: defaultFilename,
@@ -105,13 +100,49 @@ function __main(opts) {
 
 	var bundler = browserifyFn(browserifyOpts);
 
-	// Error wrapping
 	function newError(e) {
 		return this.emit('error', e);
 	}
 
+	// Bubble up errors to stream
+	bundler.on('error', newError);
+
+	// Require each file that was found in the stream
+	data.files.forEach(function(file,index) {
+		var dirname = path.dirname(file);
+
+		var requireOpts = {};
+
+		bundler.add(file, requireOpts);
+	});
+
+	this.emit('prebundle', bundler);
+
+	// Compile new bundle on change
+	function rebundle(ids) {
+		var start = new Date().getMilliseconds();
+
+		var _return = bundler.bundle()
+		.pipe(source(filename))
+		.pipe(gulp.dest('/Users/pauldufour/Repositories/brit-frontend/public/js'));
+
+		var end = new Date().getMilliseconds();
+		var time = chalk.cyan((end-start) + 'ms');
+		log('compiled in ' + time);
+
+		return _return;
+	}
+
+	bundler.on('update', rebundle);
+
+	return rebundle();
+
+}
+
+function __main(opts) {
+	// Wait till all the files are there
 	waitForStream(function() {
-		console.log('test');
+		build.call(this,opts);
 	});
 
 	return through(addFiles, endStream);
