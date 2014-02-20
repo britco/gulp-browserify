@@ -1,10 +1,56 @@
 var through = require('through'),
     path = require('path'),
     browserify = require('browserify'),
+    watchify = require('watchify'),
+    chalk = require('chalk'),
     gutil = require('gulp-util'),
 	PluginError = gutil.PluginError,
 	File = gutil.File,
-	_ = require('underscore');
+	_ = require('underscore'),
+	source = require('vinyl-source-stream'),
+	gulp = require('gulp'),
+	endStreamFn;
+
+// Log but with a prefix
+function log() {
+	// Combine arguments
+	var args = [chalk.magenta('[gulp-browserify]')];
+	var func_args = Array.prototype.slice.call(arguments);
+
+	args.push.apply(args,func_args);
+
+	return gutil.log.apply(this,args);
+}
+
+// Keep adding files until there are none left
+function addFiles(file){
+	if (file.isStream()) {
+		return this.emit('error', new PluginError(
+			'gulp-browserify',
+			'Streaming not supported'
+		));
+	}
+
+	if (!this._firstFile) this._firstFile = file;
+
+	var files = this.files || [];
+
+	files.push(file.path);
+}
+
+function endStream(files) {
+	var me = this;
+
+	console.log('files', files);
+
+	if (files.length === 0) return this.emit('end');
+
+	return endStreamFn();
+}
+
+function waitForStream(callback) {
+	this.endStreamFn = callback;
+}
 
 // Main export function.. Call either using gulpBrowserify(app.js) or opts {
 // filename: app.js }
@@ -12,7 +58,7 @@ var through = require('through'),
 // filename: x
 // maskFilenames: true
 // .. any other browserify options
-function gulpBrowserify(opts) {
+function __main(opts) {
 	if (!opts) opts = {};
 
 	// Accept single string format
@@ -32,9 +78,9 @@ function gulpBrowserify(opts) {
 		maskFilenames: true
 	});
 
-	filename = opts.filename;
+	var filename = opts.filename;
 
-	var funcArgs = ['maskFilenames','filename'];
+	var funcArgs = ['maskFilenames','filename','watch'];
 
 	// Get an option list for browserify
 	var browserifyOpts = {};
@@ -48,76 +94,27 @@ function gulpBrowserify(opts) {
 
 	var files = [];
 	var firstFile = null;
+	var browserifyFn;
 
 	// Main browserify object
-	var bundler = browserify(browserifyOpts);
+	if(!opts.watch) {
+		browserifyFn = browserify;
+	} else {
+		browserifyFn = watchify;
+	}
+
+	var bundler = browserifyFn(browserifyOpts);
 
 	// Error wrapping
 	function newError(e) {
 		return this.emit('error', e);
 	}
 
-	// Keep adding files until there are none left
-	function addFiles(file){
-		if (file.isStream()) {
-			return this.emit('error', new PluginError(
-				'gulp-browserify',
-				'Streaming not supported'
-			));
-		}
-
-		if (!firstFile) firstFile = file;
-
-		files.push(file.path);
-	}
-
-    // Run the bundling at the end
-	function endStream() {
-		var me = this;
-
-		if (files.length === 0) return this.emit('end');
-
-		bundler.on('error', newError);
-
-		// Require each file
-		files.forEach(function(file,index) {
-			var dirname = path.dirname(file);
-
-			var requireOpts = {};
-
-			// Mask the actual filename
-			// if(opts.maskFilenames) {
-			// 	requireOpts.expose = Math.random().toString(36).substr(3,3);
-			// }
-
-			bundler.add(file, requireOpts);
-		});
-
-		// Build the bundle now
-		this.emit('prebundle', bundler);
-
-		bundler.bundle(function(err, src) {
-			// Check if there were any errors
-			if(err) {
-				return newError.call(me,err);
-			}
-
-			// Output the ending file
-			var fileopts = {
-				cwd: __dirname,
-				base: __dirname,
-				path: path.join(__dirname, filename),
-				contents: new Buffer(src)
-			};
-
-			var outputFile = new File(fileopts);
-
-			me.emit('postbundle', bundler);
-			me.emit('data', outputFile);
-		});
-	}
+	waitForStream(function() {
+		console.log('test');
+	});
 
 	return through(addFiles, endStream);
 }
 
-module.exports = gulpBrowserify;
+module.exports = __main;
