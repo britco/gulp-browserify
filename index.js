@@ -1,9 +1,9 @@
 var through = require('through'),
-    path = require('path');
-    browserify = require('browserify');
-    gutil = require('gulp-util');
-	PluginError = gutil.PluginError;
-	File = gutil.File;
+    path = require('path'),
+    browserify = require('browserify'),
+    gutil = require('gulp-util'),
+	PluginError = gutil.PluginError,
+	File = gutil.File,
 	_ = require('underscore');
 
 // Main export function.. Call either using gulpBrowserify(app.js) or opts {
