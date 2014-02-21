@@ -124,7 +124,7 @@ function build(opts) {
 	function rebundle(ids) {
 		var start = new Date().getMilliseconds();
 
-		var _return = bundler.bundle()
+		var _return = bundler.bundle(opts)
 		.pipe(source(filename))
 		.pipe(gulp.dest('/Users/pauldufour/Repositories/brit-frontend/public/js'));
 
