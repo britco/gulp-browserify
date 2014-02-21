@@ -56,6 +56,7 @@ function waitForStream(callback) {
 function build(opts) {
 	// Stream data
 	var data = this._data;
+	var cwd = data.firstFile.cwd;
 
 	if (!opts) opts = {};
 
@@ -87,8 +88,6 @@ function build(opts) {
 		}
 	});
 
-	var files = [];
-	var firstFile = null;
 	var browserifyFn;
 
 	// Main browserify object
@@ -111,9 +110,12 @@ function build(opts) {
 	data.files.forEach(function(file,index) {
 		var dirname = path.dirname(file);
 
-		var requireOpts = {};
+		// get relative pathname
+		var relative = path.relative(cwd,file);
 
-		bundler.add(file, requireOpts);
+		// strip extension
+		var expose = relative.replace(/\.[^/.]+$/, "");
+		bundler.require(file, { expose: expose });
 	});
 
 	this.emit('prebundle', bundler);
@@ -136,7 +138,6 @@ function build(opts) {
 	bundler.on('update', rebundle);
 
 	return rebundle();
-
 }
 
 function __main(opts) {
