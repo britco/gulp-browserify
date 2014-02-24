@@ -9,11 +9,12 @@ var through = require('through'),
 	_ = require('underscore'),
 	source = require('vinyl-source-stream'),
 	gulp = require('gulp'),
-	endStreamFn;
+	streamify = require('gulp-streamify'),
+	endStreamFn,
+	lastExecTime;
 
-// Log but with a prefix
+// Log with a prefix
 function log() {
-	// Combine arguments
 	var args = [chalk.magenta('[gulp-browserify]')];
 	var func_args = Array.prototype.slice.call(arguments);
 
@@ -55,6 +56,7 @@ function waitForStream(callback) {
 // Build function, called from __main
 function build(opts) {
 	// Stream data
+	var stream = this;
 	var data = this._data;
 	var cwd = data.firstFile.cwd;
 
@@ -71,7 +73,8 @@ function build(opts) {
 
 	_.defaults(opts, {
 		filename: defaultFilename,
-		maskFilenames: true
+		maskFilenames: true,
+		verbose: true
 	});
 
 	var filename = opts.filename;
@@ -118,21 +121,44 @@ function build(opts) {
 		bundler.require(file, { expose: expose });
 	});
 
-	this.emit('prebundle', bundler);
+	stream.emit('prebundle', bundler);
 
-	// Compile new bundle on change
+	// Compile new bundle.js every time one of the files changes
 	function rebundle(ids) {
-		var start = new Date().getMilliseconds();
+		if(opts && opts.verbose && lastExecTime) {
+			var lastExec = (Date.now() - lastExecTime);
 
-		var _return = bundler.bundle(opts)
-		.pipe(source(filename))
-		.pipe(gulp.dest('/Users/pauldufour/Repositories/brit-frontend/public/js'));
+			if(lastExec > 0) {
+				log('time since last execution: ' +
+					chalk.cyan(lastExec + 'ms'));
+			}
+		}
+		lastExecTime = Date.now();
 
-		var end = new Date().getMilliseconds();
-		var time = chalk.cyan((end-start) + 'ms');
-		log('compiled in ' + time);
+		var start_time = Date.now();
 
-		return _return;
+		var bundle = bundler.bundle(opts);
+
+		// Use a vinyl source stream to convert the whole bundle to
+		// one compiled file.
+		var browserifystream = bundle.pipe(source(filename));
+
+		// Once the bundle is complete, fire a callback so that gulp knows
+		// when to proceed to the next step.
+		browserifystream.on('data',function() {
+			stream.emit('data', arguments[0]);
+
+			stream.emit('rebundled', bundler);
+
+			// Log execution time
+			var end_time = Date.now();
+			if(end_time-start_time > 0) {
+				var exec_time = chalk.cyan((end_time-start_time) + 'ms');
+				log('compiled in ' + exec_time);
+			}
+		});
+
+		return bundle;
 	}
 
 	bundler.on('update', rebundle);
@@ -147,6 +173,10 @@ function __main(opts) {
 	});
 
 	return through(addFiles, endStream);
+
+	// through(addFiles, endStream);
+
+	// return build.call(this,opts);
 }
 
 module.exports = __main;

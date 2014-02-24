@@ -23,6 +23,7 @@
     "chalk": "~0.4.0",
     "exorcist": "~0.1.5",
     "coffeeify": "~0.6.0",
-    "reactify": "~0.8.1"
+    "reactify": "~0.8.1",
+    "gulp-streamify": "0.0.4"
   }
 }
