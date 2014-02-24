@@ -11,7 +11,8 @@ var through = require('through'),
 	gulp = require('gulp'),
 	streamify = require('gulp-streamify'),
 	endStreamFn,
-	lastExecTime;
+	lastExecTime,
+	lastExecData;
 
 // Log with a prefix
 function log() {
@@ -145,8 +146,8 @@ function build(opts) {
 
 		// Once the bundle is complete, fire a callback so that gulp knows
 		// when to proceed to the next step.
-		browserifystream.on('data',function() {
-			stream.emit('data', arguments[0]);
+		browserifystream.on('data',function(data) {
+			stream.emit('data', data);
 
 			stream.emit('rebundled', bundler);
 
