@@ -173,10 +173,6 @@ function __main(opts) {
 	});
 
 	return through(addFiles, endStream);
-
-	// through(addFiles, endStream);
-
-	// return build.call(this,opts);
 }
 
 module.exports = __main;
