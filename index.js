@@ -16,10 +16,9 @@ var through = require('through'),
 
 // Log with a prefix
 function log() {
-	var args = [chalk.magenta('[gulp-browserify]')];
-	var func_args = Array.prototype.slice.call(arguments);
-
-	args.push.apply(args,func_args);
+	var args = Array.prototype.slice.call(arguments);
+	var prefix = [chalk.magenta('[gulp-browserify]')];
+	args[0] = prefix + ' ' + args[0];
 
 	return gutil.log.apply(this,args);
 }
@@ -74,13 +73,18 @@ function build(opts) {
 
 	_.defaults(opts, {
 		filename: defaultFilename,
-		maskFilenames: true,
-		verbose: true
+		aliasMappings: true,
+		verbose: false
 	});
 
 	var filename = opts.filename;
 
-	var funcArgs = ['maskFilenames','filename','watch'];
+	var funcArgs = [
+		'maskFilenames',
+		'aliasMappings',
+		'filename',
+		'watch'
+	];
 
 	// Get an option list for browserify
 	var browserifyOpts = {};
@@ -119,13 +123,22 @@ function build(opts) {
 
 		// strip extension
 		var expose = relative.replace(/\.[^/.]+$/, "");
-		bundler.require(file, { expose: expose });
-	});
 
-	stream.emit('prebundle', bundler);
+		if(opts.verbose === true) {
+			log('adding file: ' + expose);
+		}
+
+		if(opts.aliasMappings === true) {
+			bundler.require(file, { expose: expose });
+		} else {
+			bundler.add(file);
+		}
+	});
 
 	// Compile new bundle.js every time one of the files changes
 	function rebundle(ids) {
+		stream.emit('prebundle', bundler);
+
 		if(opts && opts.verbose && lastExecTime) {
 			var lastExec = (Date.now() - lastExecTime);
 
@@ -149,7 +162,7 @@ function build(opts) {
 		browserifystream.on('data',function(data) {
 			stream.emit('data', data);
 
-			stream.emit('rebundled', bundler);
+			stream.emit('postbundle', bundler);
 
 			// Log execution time
 			var end_time = Date.now();
