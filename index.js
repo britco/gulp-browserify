@@ -73,7 +73,8 @@ function build(opts) {
 
 	_.defaults(opts, {
 		filename: defaultFilename,
-		aliasMappings: true,
+		aliasMappings: {},
+		requireAll: true,
 		verbose: false
 	});
 
@@ -81,6 +82,7 @@ function build(opts) {
 
 	var funcArgs = [
 		'maskFilenames',
+		'requireAll',
 		'aliasMappings',
 		'filename',
 		'watch'
@@ -124,11 +126,32 @@ function build(opts) {
 		// strip extension
 		var expose = relative.replace(/\.[^/.]+$/, "");
 
+		var require_file = false;
+		if (opts.requireAll === true) {
+			require_file = true;
+		}
+
+		// Handle aliasMappings. These are mappings of require path to file.
+		// So if I put aliasMappings: { react: 'node_modules/react' } it will
+		// be available as require('react') in the browser.
+		Object.keys(opts.aliasMappings).forEach(function(aliasKey) {
+			var aliasFilename = opts.aliasMappings[aliasKey];
+
+			// Make filename relative and strip extension
+			aliasFilename = path.relative(cwd,aliasFilename).replace(/\.[^/.]+$/, "");
+
+			if(aliasFilename === relative) {
+				// Key matches, use aliasKey as the key
+				require_file = true;
+				expose = aliasKey;
+			}
+		});
+
 		if(opts.verbose === true) {
 			log('adding file: ' + expose);
 		}
 
-		if(opts.aliasMappings === true) {
+		if(require_file === true) {
 			bundler.require(file, { expose: expose });
 		} else {
 			bundler.add(file);
