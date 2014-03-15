@@ -1,4 +1,5 @@
 var through = require('through'),
+	through2 = require('through2'),
     path = require('path'),
     browserify = require('browserify'),
     watchify = require('watchify'),
@@ -53,6 +54,42 @@ function waitForStream(callback) {
 	endStreamFn = callback;
 }
 
+// Create a single Vinyl FS stream.
+function createSourceStream(filename,opts) {
+	var ins = through2();
+	var out = false;
+
+	if (filename) {
+		filename = path.resolve(filename);
+	}
+
+	var file = new File(filename ? {
+		path: filename,
+		contents: ins
+	} : {
+		contents: ins
+	});
+
+	return through2({
+		objectMode: true
+	}, function(chunk, enc, next) {
+	if (!out) {
+		this.push(file);
+		out = true;
+	}
+
+	ins.push(chunk);
+	next();
+	}, function() {
+		// Optionally add a "footer" to the output.
+		if(typeof(opts.footer) !== 'undefined') {
+			ins.push(opts.footer);
+		}
+		ins.push(null);
+		this.push(null);
+	});
+}
+
 // Build function, called from __main
 function build(opts) {
 	// Stream data
@@ -85,7 +122,8 @@ function build(opts) {
 		'requireAll',
 		'aliasMappings',
 		'filename',
-		'watch'
+		'watch',
+		'footer'
 	];
 
 	// Get an option list for browserify
@@ -178,13 +216,13 @@ function build(opts) {
 
 		// Use a vinyl source stream to convert the whole bundle to
 		// one compiled file.
-		var browserifystream = bundle.pipe(source(filename));
+		// TODO: Should be able to use vinyl-source-stream for this
+		var browserifystream = bundle.pipe(createSourceStream(filename,opts));
 
 		// Once the bundle is complete, fire a callback so that gulp knows
 		// when to proceed to the next step.
 		browserifystream.on('data',function(data) {
 			stream.emit('data', data);
-
 			stream.emit('postbundle', bundler);
 
 			// Log execution time
