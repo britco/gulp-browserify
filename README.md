@@ -12,16 +12,32 @@ stream = gulp.src(files)
 ))
 ````
 
-## Methods
+## Options:
 
-### browserify(options)
-* options
-  * __maskFilenames__
-  * __requireAll__: makes all exported modules available under require(filename). Default: `true`.
-  * __aliasMappings__: Similar to grunt-browserify option. Specify custom export names for modules. For example, to make   `node_modules/react` available from `require(react)`, you would have `aliasMappings: react: node_modules/react`.
-  * __filename__: The name of the compiled Javascript file.
-  * __watch__: Whether to use watchify or normal browserify. Default: `true`.
-  * __footer__: Content to put at the end of the compiled Javascript file.
+The following options are available on the gulp plugin. You can also pass in any of the default Browserify options: [https://github.com/substack/node-browserify#var-b--browserifyfiles-or-opts](https://github.com/substack/node-browserify#var-b--browserifyfiles-or-opts).
+
+### maskFilenames
+
+### requireAll
+
+Makes all exported modules available under require(filename).
+
+__Default__: `true`.
+
+### aliasMappings
+
+Similar to grunt-browserify option. Specify custom export names for modules. For example, to make   `node_modules/react` available from `require(react)`, you would have `aliasMappings: react: node_modules/react`.
+
+### filename
+The name of the compiled Javascript file.
+
+### watch
+Whether to use watchify or normal browserify.
+
+__Default__: `true`.
+
+### footer
+Content to put at the end of the compiled Javascript file.
 
 ## License
 Available under the [MIT License](LICENSE.md).
