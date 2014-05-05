@@ -22,7 +22,7 @@ The following options are available on the gulp plugin. You can also pass in any
 
 Makes all exported modules available under require(filename).
 
-__Default__: `true`.
+__Default__: `true`
 
 ### aliasMappings
 
@@ -34,7 +34,7 @@ The name of the compiled Javascript file.
 ### watch
 Whether to use watchify or normal browserify.
 
-__Default__: `true`.
+__Default__: `true`
 
 ### footer
 Content to put at the end of the compiled Javascript file.
