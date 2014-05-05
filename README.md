@@ -15,7 +15,7 @@ stream = gulp.src(files)
 
 ## browserify(options)
 * options
-  * _maskFilenames_
+  * __maskFilenames__
   * requireAll
   * aliasMappings
   * filename
