@@ -16,11 +16,11 @@ stream = gulp.src(files)
 ## browserify(options)
 * options
   * __maskFilenames__
-  * requireAll
-  * aliasMappings
-  * filename
-  * watch
-  * footer
+  * __requireAll__
+  * __aliasMappings__
+  * __filename__
+  * __watch__
+  * __footer__
 
 ## License
 Available under the [MIT License](LICENSE.md).
