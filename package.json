@@ -2,6 +2,13 @@
   "name": "gulp-browserify",
   "version": "0.1.1",
   "description": "gulp-browserify",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/britco/gulp-watchify.git"
+  },
   "browserify": {
     "transform": [
       "coffeeify",
