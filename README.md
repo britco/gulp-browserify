@@ -11,5 +11,11 @@ stream = gulp.src(files)
 ))
 ````
 
+## Functions
+
+## browserify(options)
+* options
+  * Test
+
 ## License
 Available under the [MIT License](LICENSE.md).
