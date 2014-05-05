@@ -11,9 +11,9 @@ stream = gulp.src(files)
 ))
 ````
 
-## Functions
+## Methods
 
-## browserify(options)
+### browserify(options)
 * options
   * __maskFilenames__
   * __requireAll__
