@@ -1,10 +1,11 @@
 var through = require('through'),
 	through2 = require('through2'),
-    path = require('path'),
-    browserify = require('browserify'),
-    watchify = require('watchify'),
-    chalk = require('chalk'),
-    gutil = require('gulp-util'),
+  path = require('path'),
+  browserify = require('browserify'),
+  watchify = require('watchify'),
+  chalk = require('chalk'),
+  gutil = require('gulp-util'),
+  shim = require('browserify-shim'),
 	PluginError = gutil.PluginError,
 	File = gutil.File,
 	_ = require('underscore'),
@@ -112,7 +113,8 @@ function build(opts) {
 		filename: defaultFilename,
 		aliasMappings: {},
 		requireAll: true,
-		verbose: false
+		verbose: false,
+		watch: true
 	});
 
 	var filename = opts.filename;
@@ -124,6 +126,7 @@ function build(opts) {
 		'filename',
 		'watch',
 		'footer'
+		// 'shim'
 	];
 
 	// Get an option list for browserify
@@ -147,6 +150,15 @@ function build(opts) {
 
 	var bundler = browserifyFn(browserifyOpts);
 
+	// Allow shimming of libs
+	if(opts.shim) {
+		for(var lib in opts.shim) {
+
+		}
+		// bundler = shim(bundler);
+		// console.log('bundler',bundler);
+	}
+
 	function newError(e) {
 		return this.emit('error', e);
 	}
@@ -158,10 +170,15 @@ function build(opts) {
 	data.files.forEach(function(file,index) {
 		var dirname = path.dirname(file);
 
-		// get relative pathname
+		// Get relative pathname
 		var relative = path.relative(cwd,file);
 
-		// strip extension
+		// Strip the basedir from the filename.. So if basedir is
+		// /assets/coffee/app, and /assets/coffee is the basedir, the exposed path
+		// will be just "app".
+		relative = path.relative(opts.basedir,file);
+
+		// Strip extension
 		var expose = relative.replace(/\.[^/.]+$/, "");
 
 		var require_file = false;
