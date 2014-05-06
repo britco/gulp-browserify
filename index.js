@@ -126,7 +126,6 @@ function build(opts) {
 		'filename',
 		'watch',
 		'footer'
-		// 'shim'
 	];
 
 	// Get an option list for browserify
@@ -149,15 +148,6 @@ function build(opts) {
 	}
 
 	var bundler = browserifyFn(browserifyOpts);
-
-	// Allow shimming of libs
-	if(opts.shim) {
-		for(var lib in opts.shim) {
-
-		}
-		// bundler = shim(bundler);
-		// console.log('bundler',bundler);
-	}
 
 	function newError(e) {
 		return this.emit('error', e);
