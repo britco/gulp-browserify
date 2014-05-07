@@ -174,7 +174,6 @@ function build(opts) {
 		browserifyFn = watchify;
 	}
 
-	console.log('browserifyOpts',browserifyOpts);
 	var bundler = browserifyFn(browserifyOpts);
 
 	function newError(e) {
