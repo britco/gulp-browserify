@@ -20,7 +20,7 @@ The following options are available on the gulp plugin. You can also pass in any
 
 ### noBowerParse
 
-Don't parse any bower_component files in browserify.
+Adds all bower components to browserify's `noParse` list.
 
 __Default__: `true`
 
