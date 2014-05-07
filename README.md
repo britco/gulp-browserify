@@ -18,6 +18,12 @@ The following options are available on the gulp plugin. You can also pass in any
 
 ### maskFilenames
 
+### noBowerParse
+
+Don't parse any bower_component files in browserify.
+
+__Default__: `true`
+
 ### requireAll
 
 Makes all exported modules available under require(filename).
