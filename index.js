@@ -1,4 +1,5 @@
 var through = require('through'),
+	fs = require('fs'),
 	through2 = require('through2'),
   path = require('path'),
   browserify = require('browserify'),
@@ -97,6 +98,7 @@ function build(opts) {
 	var stream = this;
 	var data = this._data;
 	var cwd = data.firstFile.cwd;
+	var root = path.dirname(module.parent.filename);
 
 	if (!opts) opts = {};
 
@@ -125,7 +127,8 @@ function build(opts) {
 		'aliasMappings',
 		'filename',
 		'watch',
-		'footer'
+		'footer',
+		'parseBower'
 	];
 
 	// Get an option list for browserify
@@ -138,6 +141,27 @@ function build(opts) {
 		}
 	});
 
+	// Default browserify options
+	browserifyOpts = _.defaults(browserifyOpts, {noParse: []});
+
+	// Don't parse any bower_components files
+	var bower_path = path.resolve(root,'bower_components');
+	var dirs = fs.readdirSync(bower_path);
+	dirs.forEach(function(dir) {
+		var pkg_path = path.join(bower_path,dir);
+		var main_paths = require(path.join(pkg_path,'bower.json')).main;
+		if(!_.isArray(main_paths)) {
+			main_paths = [main_paths];
+		}
+
+		main_paths.forEach(function(main_path) {
+			var abs_path = path.resolve(pkg_path,main_path);
+			browserifyOpts.noParse.push(abs_path);
+			browserifyOpts.noParse.push(path.relative(root,abs_path));
+			browserifyOpts.noParse.push(path.relative(opts.basedir,abs_path));
+		});
+	});
+
 	var browserifyFn;
 
 	// Main browserify object
@@ -147,9 +171,11 @@ function build(opts) {
 		browserifyFn = watchify;
 	}
 
+	console.log('browserifyOpts',browserifyOpts);
 	var bundler = browserifyFn(browserifyOpts);
 
 	function newError(e) {
+		throw e;
 		return this.emit('error', e);
 	}
 

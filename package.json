@@ -1,7 +1,7 @@
 {
-  "name": "gulp-browserify",
+  "name": "gulp-watchify",
   "version": "0.1.3",
-  "description": "gulp-browserify",
+  "description": "gulp-watchify",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
