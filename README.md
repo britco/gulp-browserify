@@ -4,7 +4,7 @@ Gulp plugin for watchify, an incremental browserify builder.
 
 ## Example
 ````
-browserify = require('gulp-browserify')
+browserify = require('gulp-watchify	')
 stream = gulp.src(files)
 .pipe(browserify(
 	basedir: './'
@@ -20,7 +20,7 @@ The following options are available on the gulp plugin. You can also pass in any
 
 ### noBowerParse
 
-Don't parse any bower_component files in browserify.
+Adds all bower components to browserify's `noParse` list.
 
 __Default__: `true`
 
