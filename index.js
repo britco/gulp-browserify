@@ -178,7 +178,6 @@ function build(opts) {
 	var bundler = browserifyFn(browserifyOpts);
 
 	function newError(e) {
-		throw e;
 		return this.emit('error', e);
 	}
 
