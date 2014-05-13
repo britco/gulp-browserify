@@ -150,18 +150,23 @@ function build(opts) {
 		var bower_path = path.resolve(root,'bower_components');
 		var dirs = fs.readdirSync(bower_path);
 		dirs.forEach(function(dir) {
-			var pkg_path = path.join(bower_path,dir);
-			var main_paths = require(path.join(pkg_path,'bower.json')).main;
-			if(!_.isArray(main_paths)) {
-				main_paths = [main_paths];
-			}
+			if(dir !== '.DS_Store') {
+				var pkg_path = path.join(bower_path,dir);
 
-			main_paths.forEach(function(main_path) {
-				var abs_path = path.resolve(pkg_path,main_path);
-				browserifyOpts.noParse.push(abs_path);
-				browserifyOpts.noParse.push(path.relative(root,abs_path));
-				browserifyOpts.noParse.push(path.relative(opts.basedir,abs_path));
-			});
+				if(fs.existsSync(path.join(pkg_path,'bower.json'))) {
+					var main_paths = require(path.join(pkg_path,'bower.json')).main;
+					if(!_.isArray(main_paths)) {
+						main_paths = [main_paths];
+					}
+
+					main_paths.forEach(function(main_path) {
+						var abs_path = path.resolve(pkg_path,main_path);
+						browserifyOpts.noParse.push(abs_path);
+						browserifyOpts.noParse.push(path.relative(root,abs_path));
+						browserifyOpts.noParse.push(path.relative(opts.basedir,abs_path));
+					});
+				}
+			}
 		});
 	}
 
@@ -177,7 +182,7 @@ function build(opts) {
 	var bundler = browserifyFn(browserifyOpts);
 
 	function newError(e) {
-		return this.emit('error', e);
+		throw e;
 	}
 
 	// Bubble up errors to stream
@@ -209,11 +214,12 @@ function build(opts) {
 		Object.keys(opts.aliasMappings).forEach(function(aliasKey) {
 			var aliasFilename = opts.aliasMappings[aliasKey];
 
-			// Make filename relative and strip extension
-			aliasFilename = path.relative(cwd,aliasFilename).replace(/\.[^/.]+$/, "");
+			// Resolve filenames
+			aliasFilename = path.resolve(opts.basedir,aliasFilename);
+			var relativeFilename = path.resolve(opts.basedir,relative);
 
-			if(aliasFilename === relative) {
-				// Key matches, use aliasKey as the key
+			if(aliasFilename === relativeFilename) {
+				// Key matches, use relativeFilename as the key
 				require_file = true;
 				expose = aliasKey;
 			}
