@@ -2,17 +2,17 @@ var through = require('through'),
 	fs = require('fs'),
 	through2 = require('through2'),
   path = require('path'),
-  browserify = require('browserify'),
   watchify = require('watchify'),
   chalk = require('chalk'),
   gutil = require('gulp-util'),
-  shim = require('browserify-shim'),
 	PluginError = gutil.PluginError,
 	File = gutil.File,
 	_ = require('underscore'),
 	source = require('vinyl-source-stream'),
 	gulp = require('gulp'),
 	streamify = require('gulp-streamify'),
+	mapify = require('mapify'),
+	compiles = 0,
 	endStreamFn,
 	lastExecTime,
 	lastExecData;
@@ -111,14 +111,20 @@ function build(opts) {
 	// Default options..
 	defaultFilename = 'bundle.js';
 
-	_.defaults(opts, {
+	var _defaults = {
 		filename: defaultFilename,
-		aliasMappings: {},
+		aliasMappings: {
+			pathSeperator: '/',
+			entries: []
+		},
 		requireAll: true,
 		verbose: false,
 		watch: true,
 		noBowerParse: true
-	});
+	};
+
+	_.defaults(opts, _defaults);
+	_.defaults(opts.aliasMappings,_defaults.aliasMappings);
 
 	var filename = opts.filename;
 
@@ -170,16 +176,7 @@ function build(opts) {
 		});
 	}
 
-	var browserifyFn;
-
-	// Main browserify object
-	if(!opts.watch) {
-		browserifyFn = browserify;
-	} else {
-		browserifyFn = watchify;
-	}
-
-	var bundler = browserifyFn(browserifyOpts);
+	var bundler = watchify(browserifyOpts);
 
 	function newError(e) {
 		throw e;
@@ -208,37 +205,25 @@ function build(opts) {
 			require_file = true;
 		}
 
-		// Handle aliasMappings. These are mappings of require path to file.
-		// So if I put aliasMappings: { react: 'node_modules/react' } it will
-		// be available as require('react') in the browser.
-		Object.keys(opts.aliasMappings).forEach(function(aliasKey) {
-			var aliasFilename = opts.aliasMappings[aliasKey];
+		bundler.add(file);
+	});
 
-			// Resolve filenames
-			aliasFilename = path.resolve(opts.basedir,aliasFilename);
-			var relativeFilename = path.resolve(opts.basedir,relative);
-
-			if(aliasFilename === relativeFilename) {
-				// Key matches, use relativeFilename as the key
-				require_file = true;
-				expose = aliasKey;
-			}
+	// Expose files through mapify
+	var aliasEntries = opts.aliasMappings.entries;
+	if(aliasEntries.length && _.values(_.first(aliasEntries)).length) {
+		bundler.require = _.wrap(bundler.require, function(func,file,opts) {
+			stream.emit('require', file, opts);
+			func.call(this,file,opts);
 		});
 
-		if(opts.verbose === true) {
-			log('adding file: ' + expose);
-		}
-
-		if(require_file === true) {
-			bundler.require(file, { expose: expose });
-		} else {
-			bundler.add(file);
-		}
-	});
+		bundler.plugin(mapify,opts.aliasMappings);
+	}
 
 	// Compile new bundle.js every time one of the files changes
 	function rebundle(ids) {
 		stream.emit('prebundle', bundler);
+
+		compiles++;
 
 		if(opts && opts.verbose && lastExecTime) {
 			var lastExec = (Date.now() - lastExecTime);
@@ -270,6 +255,12 @@ function build(opts) {
 			if(end_time-start_time > 0) {
 				var exec_time = chalk.cyan((end_time-start_time) + 'ms');
 				log('compiled in ' + exec_time);
+			}
+
+			// If compiles is >= 1, and opts.watch is false, stop watching
+			if(compiles >= 1) {
+				stream.emit('end');
+				bundler.close();
 			}
 		});
 
