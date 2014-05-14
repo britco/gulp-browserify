@@ -187,24 +187,6 @@ function build(opts) {
 
 	// Require each file that was found in the stream
 	data.files.forEach(function(file,index) {
-		var dirname = path.dirname(file);
-
-		// Get relative pathname
-		var relative = path.relative(cwd,file);
-
-		// Strip the basedir from the filename.. So if basedir is
-		// /assets/coffee/app, and /assets/coffee is the basedir, the exposed path
-		// will be just "app".
-		relative = path.relative(opts.basedir,file);
-
-		// Strip extension
-		var expose = relative.replace(/\.[^/.]+$/, "");
-
-		var require_file = false;
-		if (opts.requireAll === true) {
-			require_file = true;
-		}
-
 		bundler.add(file);
 	});
 
