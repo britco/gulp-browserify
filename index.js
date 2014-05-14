@@ -241,7 +241,6 @@ function build(opts) {
 
 			// If compiles is >= 1, and opts.watch is false, stop watching
 			if(compiles >= 1 && opts.watch === false) {
-				console.log('ending');
 				stream.emit('end');
 				bundler.close();
 			}
