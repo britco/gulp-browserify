@@ -83,10 +83,6 @@ function createSourceStream(filename,opts) {
 	ins.push(chunk);
 	next();
 	}, function() {
-		// Optionally add a "footer" to the output.
-		if(typeof(opts.footer) !== 'undefined') {
-			ins.push(opts.footer);
-		}
 		ins.push(null);
 		this.push(null);
 	});
@@ -134,7 +130,6 @@ function build(opts) {
 		'aliasMappings',
 		'filename',
 		'watch',
-		'footer',
 		'parseBower'
 	];
 
