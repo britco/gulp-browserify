@@ -42,8 +42,5 @@ Whether to use watchify or normal browserify.
 
 __Default__: `true`
 
-### footer
-Content to put at the end of the compiled Javascript file.
-
 ## License
 Available under the [MIT License](LICENSE.md).
