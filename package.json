@@ -24,6 +24,6 @@
     "underscore": "~1.5.2",
     "vinyl": "~0.2.3",
     "vinyl-source-stream": "~0.1.1",
-    "watchify": "1.0.1"
+    "watchify": "^0.9.0"
   }
 }
