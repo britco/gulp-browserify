@@ -147,11 +147,22 @@ function build(opts) {
 	browserifyOpts = _.defaults(browserifyOpts, {noParse: []});
 
 	// Don't parse any bower_components files
-	if(opts.noBowerParse === true) {
+	if(opts.noBowerParse === true || _.isObject(opts.noBowerParse)) {
 		var bower_path = path.resolve(root,'bower_components');
 		var dirs = fs.readdirSync(bower_path);
 		dirs.forEach(function(dir) {
-			if(dir !== '.DS_Store') {
+			// Exclude certain directories
+			var skip = false;
+
+			if(_.isObject(opts.noBowerParse) && opts.noBowerParse.unless) {
+				if(opts.noBowerParse.unless instanceof RegExp) {
+					if(opts.noBowerParse.unless.test(dir)) {
+						skip = true;
+					}
+				}
+			}
+
+			if(skip !== true && dir !== '.DS_Store') {
 				var pkg_path = path.join(bower_path,dir);
 
 				if(fs.existsSync(path.join(pkg_path,'bower.json'))) {
