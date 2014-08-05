@@ -10,21 +10,20 @@
     "url": "git://github.com/britco/gulp-watchify.git"
   },
   "dependencies": {
+    "chalk": "~0.4.0",
+    "clone-stats": "0.0.1",
+    "coffeeify": "~0.6.0",
+    "exorcist": "~0.1.5",
+    "gulp": "~3.5.2",
+    "gulp-streamify": "0.0.4",
     "gulp-util": "~2.2.14",
-    "through2": "~0.4.1",
-    "watchify": "0.9.0",
-    "browserify": "3.46.1",
+    "mapify": "~0.1.0",
     "stream-combiner": "0.0.4",
     "through": "~2.3.4",
+    "through2": "~0.4.1",
     "underscore": "~1.5.2",
-    "vinyl-source-stream": "~0.1.1",
-    "clone-stats": "0.0.1",
     "vinyl": "~0.2.3",
-    "gulp": "~3.5.2",
-    "chalk": "~0.4.0",
-    "exorcist": "~0.1.5",
-    "coffeeify": "~0.6.0",
-    "gulp-streamify": "0.0.4",
-    "mapify": "~0.1.0"
+    "vinyl-source-stream": "~0.1.1",
+    "watchify": "0.9.0"
   }
 }
