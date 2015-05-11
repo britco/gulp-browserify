@@ -14,7 +14,7 @@ stream = gulp.src(files)
 
 ## Options:
 
-The following options are available on the gulp plugin. You can also pass in any of the default Browserify options: [https://github.com/substack/node-browserify#var-b--browserifyfiles-or-opts](https://github.com/substack/node-browserify#var-b--browserifyfiles-or-opts).
+The following options are available on the gulp plugin. You can also pass in any of the default Browserify options: [https://github.com/substack/node-browserify#browserifyfiles--opts](https://github.com/substack/node-browserify#browserifyfiles--opts).
 
 ### filename
 The name of the compiled Javascript file.
