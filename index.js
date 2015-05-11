@@ -1,3 +1,5 @@
+var gutil = require('gulp-util')
+
 // Require browserify and watchify from the parent so that their versions are
 // not tied to gulp-watchify
 try {
@@ -12,7 +14,6 @@ try {
 }
 
 function log() {
-  var gutil = require('gulp-util');
   var args = Array.prototype.slice.call(arguments)
   var prefix = [gutil.colors.magenta('[gulp-watchify]')]
   args[0] = prefix + ' ' + args[0]
@@ -74,6 +75,8 @@ module.exports = function(opts) {
   eventStream = require('event-stream');
 
   var ctx = {rebundle: rebundle}
+
+  opts = _.defaults(opts, {watch: false, filename: 'app.js'})
 
   stream = eventStream.writeArray(function(err, files) {
     var entries = _.pluck(files, 'path')
