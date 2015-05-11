@@ -89,6 +89,7 @@ module.exports = function(opts) {
     bundler = watchify(browserify(opts))
     stream.emit('prebundle', bundler)
 
+		// Compile files once, as well as whenever the bundle changes
     var rebundle = this.rebundle.bind(null, _.extend(
       opts, {
         stream: stream,
