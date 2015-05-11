@@ -1,6 +1,6 @@
 {
   "name": "gulp-watchify",
-  "version": "0.1.7",
+  "version": "1.0.0",
   "description": "gulp-watchify",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -10,21 +10,9 @@
     "url": "git://github.com/britco/gulp-watchify.git"
   },
   "dependencies": {
-    "chalk": "0.4.0",
-    "clone-stats": "0.0.1",
-    "coffeeify": "0.6.0",
-    "exorcist": "0.1.6",
-    "gulp": "3.5.6",
-    "gulp-streamify": "0.0.4",
-    "gulp-util": "2.2.14",
-    "mapify": "0.1.0",
-    "stream-combiner": "0.0.4",
-    "through": "2.3.4",
-    "through2": "0.4.1",
-    "underscore": "1.5.2",
-    "vinyl": "0.2.3",
-    "vinyl-source-stream": "0.1.1",
-    "browserify": "3.46.1",
-    "watchify": "0.9.0"
+    "event-stream": "^3.3.1",
+    "gulp-util": "^3.0.4",
+    "underscore": "^1.8.3",
+    "vinyl-source-stream": "^1.1.0"
   }
 }

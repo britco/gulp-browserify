@@ -1,272 +1,103 @@
-var through = require('through'),
-	fs = require('fs'),
-	through2 = require('through2'),
-  path = require('path'),
-  watchify = require('watchify'),
-  chalk = require('chalk'),
-  gutil = require('gulp-util'),
-	PluginError = gutil.PluginError,
-	File = gutil.File,
-	_ = require('underscore'),
-	source = require('vinyl-source-stream'),
-	gulp = require('gulp'),
-	streamify = require('gulp-streamify'),
-	mapify = require('mapify'),
-	compiles = 0,
-	endStreamFn,
-	lastExecTime,
-	lastExecData;
+var eventStream = require('event-stream'),
+gutil           = require('gulp-util'),
+source          = require('vinyl-source-stream');
 
-// Log with a prefix
+// Require browserify and watchify from the parent so that their versions are
+// not tied to gulp-watchify
+try {
+	var browserify = module.parent.require('browserify'),
+	    watchify = module.parent.require('watchify');
+} catch(e) {
+	var parentFile = module.parent.id
+	throw new Error([
+		gutil.colors.red('Local browserify or watchify not found in ' + parentFile),
+		gutil.colors.red('Try running: ' + 'npm install browserify watchify')
+	].join("\n"))
+}
+
 function log() {
-	var args = Array.prototype.slice.call(arguments);
-	var prefix = [chalk.magenta('[gulp-browserify]')];
-	args[0] = prefix + ' ' + args[0];
-
+	var args = Array.prototype.slice.call(arguments)
+	var prefix = [gutil.colors.magenta('[gulp-watchify]')]
+	args[0] = prefix + ' ' + args[0]
 	return gutil.log.apply(this,args);
 }
 
-// Keep adding files until there are none left
-function addFiles(file){
-	if (file.isStream()) {
-		return this.emit('error', new PluginError(
-			'gulp-browserify',
-			'Streaming not supported'
-		));
-	}
+function rebundle(opts) {
+  var _  = require('underscore')
 
-	this._data = this._data || {};
+  var stream = opts.stream,
+      bundler = opts.bundler;
 
-	if (!this._data.firstFile) this._data.firstFile = file;
+  bundler.compiles = bundler.compiles || 0
+  bundler.compiles++
 
-	if(!_.has(this._data,'files')) this._data.files = [];
+  if (typeof bundler.start_time !== "undefined" && bundler.start_time !== null) {
+    log('time since last execution: ' + gutil.colors.cyan(Date.now() - bundler.start_time + 'ms'))
+  }
+  bundler.start_time = Date.now()
 
-	this._data.files.push(file.path);
+  // Form bundle
+  bundle = bundler.bundle()
+
+  // Catch errors
+  bundle.on('error', (function(_this) {
+    return function(err) {
+      gutil.log(gutil.colors.red("" + (err.annotated || err.message)))
+      return stream.emit('end')
+    }
+  })(this))
+
+  var browserifyStream = bundle.pipe(source(opts.filename))
+  browserifyStream.on('data', (function(_this) {
+    return function(data) {
+      // Forward data returned to opts.stream
+      stream.emit('data', data)
+
+      // Log compilation time
+      var start_time = bundler.start_time
+      var end_time = Date.now()
+
+      if (end_time - start_time > 0) {
+        log('compiled in ' + gutil.colors.cyan((end_time - start_time) + 'ms'))
+      }
+
+      if (bundler.compiles >= 1 && opts.watch === false) {
+        // Close stream if not in watch mode
+        stream.emit('end')
+        return bundler.close()
+      }
+    }
+  })(this))
+  return bundle;
 }
 
-function endStream(files) {
-    files = this._data.files;
-	if (files.length === 0) return this.emit('end');
+module.exports = function(opts) {
+  var _       = require('underscore'),
+	eventStream = require('event-stream');
 
-	return endStreamFn.apply(this);
-}
+	var ctx = {rebundle: rebundle}
 
-// Function that is called once endStream is called
-function waitForStream(callback) {
-	endStreamFn = callback;
-}
+	stream = eventStream.writeArray(function(err, files) {
+		var entries = _.pluck(files, 'path')
 
-// Create a single Vinyl FS stream.
-function createSourceStream(filename,opts) {
-	var ins = through2();
-	var out = false;
+		opts = _.extend(opts, {
+			cache: {},
+			packageCache: {},
+			entries: entries,
+		})
 
-	if (filename) {
-		filename = path.resolve(filename);
-	}
+		bundler = watchify(browserify(opts))
+		stream.emit('prebundle', bundler)
 
-	var file = new File(filename ? {
-		path: filename,
-		contents: ins
-	} : {
-		contents: ins
-	});
-
-	return through2({
-		objectMode: true
-	}, function(chunk, enc, next) {
-	if (!out) {
-		this.push(file);
-		out = true;
-	}
-
-	ins.push(chunk);
-	next();
-	}, function() {
-		ins.push(null);
-		this.push(null);
-	});
-}
-
-// Build function, called from __main
-function build(opts) {
-	// Stream data
-	var stream = this;
-	var data = this._data;
-	var cwd = data.firstFile.cwd;
-	var root = path.dirname(module.parent.filename);
-
-	if (!opts) opts = {};
-
-	// Accept single string format
-	if(typeof(opts) !== 'object') {
-		opts = {};
-		opts.filename = filename;
-	}
-
-	// Default options..
-	defaultFilename = 'bundle.js';
-
-	var _defaults = {
-		filename: defaultFilename,
-		aliasMappings: {
-			pathSeperator: '/',
-			entries: []
-		},
-		requireAll: true,
-		verbose: false,
-		watch: true,
-		noBowerParse: true
-	};
-
-	_.defaults(opts, _defaults);
-	_.defaults(opts.aliasMappings,_defaults.aliasMappings);
-
-	var filename = opts.filename;
-
-	var funcArgs = [
-		'maskFilenames',
-		'requireAll',
-		'aliasMappings',
-		'filename',
-		'watch',
-		'parseBower'
-	];
-
-	// Get an option list for browserify
-	var browserifyOpts = {};
-	Object.keys(opts).forEach(function(key) {
-		value = opts[key];
-
-		if(!_.contains(funcArgs,key)) {
-			browserifyOpts[key] = value;
-		}
-	});
-
-	// Default browserify options
-	browserifyOpts = _.defaults(browserifyOpts, {noParse: []});
-
-	// Don't parse any bower_components files
-	if(opts.noBowerParse === true || _.isObject(opts.noBowerParse)) {
-		var bower_path = path.resolve(root,'bower_components');
-		var dirs = fs.readdirSync(bower_path);
-		dirs.forEach(function(dir) {
-			// Exclude certain directories
-			var skip = false;
-
-			if(_.isObject(opts.noBowerParse) && opts.noBowerParse.unless) {
-				if(opts.noBowerParse.unless instanceof RegExp) {
-					if(opts.noBowerParse.unless.test(dir)) {
-						skip = true;
-					}
-				}
+		var rebundle = this.rebundle.bind(null, _.extend(
+			opts, {
+				stream: stream,
+				bundler: bundler
 			}
+		))
+		bundler.on('update', rebundle)
+		return rebundle();
+	}.bind(ctx))
 
-			if(skip !== true && dir !== '.DS_Store') {
-				var pkg_path = path.join(bower_path,dir);
-
-				if(fs.existsSync(path.join(pkg_path,'bower.json'))) {
-					var main_paths = require(path.join(pkg_path,'bower.json')).main;
-					if(!_.isArray(main_paths)) {
-						main_paths = [main_paths];
-					}
-
-					main_paths.forEach(function(main_path) {
-						var abs_path = path.resolve(pkg_path,main_path);
-						browserifyOpts.noParse.push(abs_path);
-						browserifyOpts.noParse.push(path.relative(root,abs_path));
-						browserifyOpts.noParse.push(path.relative(opts.basedir,abs_path));
-					});
-				}
-			}
-		});
-	}
-
-	var bundler = watchify(browserifyOpts);
-
-	function newError(e) {
-		throw e;
-	}
-
-	// Bubble up errors to stream
-	bundler.on('error', newError);
-
-	// Require each file that was found in the stream
-	data.files.forEach(function(file,index) {
-		bundler.add(file);
-	});
-
-	// Expose files through mapify
-	var aliasEntries = opts.aliasMappings.entries;
-	if(aliasEntries.length && _.values(_.first(aliasEntries)).length) {
-		bundler.require = _.wrap(bundler.require, function(func,file,opts) {
-			stream.emit('require', file, opts);
-			func.call(this,file,opts);
-		});
-
-		bundler.plugin(mapify,opts.aliasMappings);
-	}
-
-	// Compile new bundle.js every time one of the files changes
-	function rebundle(ids) {
-		stream.emit('prebundle', bundler);
-
-		compiles++;
-
-		if(opts && opts.verbose && lastExecTime) {
-			var lastExec = (Date.now() - lastExecTime);
-
-			if(lastExec > 0) {
-				log('time since last execution: ' +
-					chalk.cyan(lastExec + 'ms'));
-			}
-		}
-		lastExecTime = Date.now();
-
-		var start_time = Date.now();
-
-		var bundle = bundler.bundle(opts);
-
-		// Use a vinyl source stream to convert the whole bundle to
-		// one compiled file.
-		// TODO: Should be able to use vinyl-source-stream for this
-		var browserifystream = bundle.pipe(createSourceStream(filename,opts));
-
-		// Once the bundle is complete, fire a callback so that gulp knows
-		// when to proceed to the next step.
-		browserifystream.on('data',function(data) {
-			stream.emit('data', data);
-			stream.emit('postbundle', bundler);
-
-			// Log execution time
-			var end_time = Date.now();
-			if(end_time-start_time > 0) {
-				var exec_time = chalk.cyan((end_time-start_time) + 'ms');
-				log('compiled in ' + exec_time);
-			}
-
-			// If compiles is >= 1, and opts.watch is false, stop watching
-			if(compiles >= 1 && opts.watch === false) {
-				stream.emit('end');
-				bundler.close();
-			}
-		});
-
-		return bundle;
-	}
-
-	bundler.on('update', rebundle);
-
-	return rebundle();
-}
-
-function __main(opts) {
-	// Wait till all the files are there
-	waitForStream(function() {
-		build.call(this,opts);
-	});
-
-	return through(addFiles, endStream);
-}
-
-module.exports = __main;
+	return stream;
+};
