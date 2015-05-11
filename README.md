@@ -1,6 +1,6 @@
 gulp-watchify
 ==============
-Gulp plugin for watchify, an incremental browserify builder.
+Gulp plugin for watchify, an incremental browserify builder. Works by taking all the files from gulp.src, passing them as opts.entries to browserify, then rebundling every time of those files changes.
 
 ## Example
 ````
