@@ -4,7 +4,7 @@ Gulp plugin for watchify, an incremental browserify builder.
 
 ## Example
 ````
-browserify = require('gulp-watchify	')
+browserify = require('gulp-watchify')
 stream = gulp.src(files)
 .pipe(browserify(
 	basedir: './'
