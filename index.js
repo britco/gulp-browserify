@@ -5,21 +5,21 @@ source          = require('vinyl-source-stream');
 // Require browserify and watchify from the parent so that their versions are
 // not tied to gulp-watchify
 try {
-	var browserify = module.parent.require('browserify'),
-	    watchify = module.parent.require('watchify');
+  var browserify = module.parent.require('browserify'),
+      watchify = module.parent.require('watchify');
 } catch(e) {
-	var parentFile = module.parent.id
-	throw new Error([
-		gutil.colors.red('Local browserify or watchify not found in ' + parentFile),
-		gutil.colors.red('Try running: ' + 'npm install browserify watchify')
-	].join("\n"))
+  var parentFile = module.parent.id
+  throw new Error([
+    gutil.colors.red('Local browserify or watchify not found in ' + parentFile),
+    gutil.colors.red('Try running: ' + 'npm install browserify watchify')
+  ].join("\n"))
 }
 
 function log() {
-	var args = Array.prototype.slice.call(arguments)
-	var prefix = [gutil.colors.magenta('[gulp-watchify]')]
-	args[0] = prefix + ' ' + args[0]
-	return gutil.log.apply(this,args);
+  var args = Array.prototype.slice.call(arguments)
+  var prefix = [gutil.colors.magenta('[gulp-watchify]')]
+  args[0] = prefix + ' ' + args[0]
+  return gutil.log.apply(this,args);
 }
 
 function rebundle(opts) {
@@ -73,31 +73,31 @@ function rebundle(opts) {
 
 module.exports = function(opts) {
   var _       = require('underscore'),
-	eventStream = require('event-stream');
+  eventStream = require('event-stream');
 
-	var ctx = {rebundle: rebundle}
+  var ctx = {rebundle: rebundle}
 
-	stream = eventStream.writeArray(function(err, files) {
-		var entries = _.pluck(files, 'path')
+  stream = eventStream.writeArray(function(err, files) {
+    var entries = _.pluck(files, 'path')
 
-		opts = _.extend(opts, {
-			cache: {},
-			packageCache: {},
-			entries: entries,
-		})
+    opts = _.extend(opts, {
+      cache: {},
+      packageCache: {},
+      entries: entries,
+    })
 
-		bundler = watchify(browserify(opts))
-		stream.emit('prebundle', bundler)
+    bundler = watchify(browserify(opts))
+    stream.emit('prebundle', bundler)
 
-		var rebundle = this.rebundle.bind(null, _.extend(
-			opts, {
-				stream: stream,
-				bundler: bundler
-			}
-		))
-		bundler.on('update', rebundle)
-		return rebundle();
-	}.bind(ctx))
+    var rebundle = this.rebundle.bind(null, _.extend(
+      opts, {
+        stream: stream,
+        bundler: bundler
+      }
+    ))
+    bundler.on('update', rebundle)
+    return rebundle();
+  }.bind(ctx))
 
-	return stream;
+  return stream;
 };
