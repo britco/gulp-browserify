@@ -1,7 +1,3 @@
-var eventStream = require('event-stream'),
-gutil           = require('gulp-util'),
-source          = require('vinyl-source-stream');
-
 // Require browserify and watchify from the parent so that their versions are
 // not tied to gulp-watchify
 try {
@@ -16,6 +12,7 @@ try {
 }
 
 function log() {
+  var gutil = require('gulp-util');
   var args = Array.prototype.slice.call(arguments)
   var prefix = [gutil.colors.magenta('[gulp-watchify]')]
   args[0] = prefix + ' ' + args[0]
@@ -23,10 +20,11 @@ function log() {
 }
 
 function rebundle(opts) {
-  var _  = require('underscore')
+  var _  = require('underscore'),
+  source = require('vinyl-source-stream');
 
   var stream = opts.stream,
-      bundler = opts.bundler;
+  bundler    = opts.bundler;
 
   bundler.compiles = bundler.compiles || 0
   bundler.compiles++
@@ -80,11 +78,11 @@ module.exports = function(opts) {
   stream = eventStream.writeArray(function(err, files) {
     var entries = _.pluck(files, 'path')
 
-    opts = _.extend(opts, {
+    var browserifyOpts = _.omit(_.extend(opts, {
       cache: {},
       packageCache: {},
       entries: entries,
-    })
+    }), 'watch', 'filename')
 
     bundler = watchify(browserify(opts))
     stream.emit('prebundle', bundler)
