@@ -1,4 +1,4 @@
-var gutil = require('gulp-util')
+var gutil   = require('gulp-util')
 
 // Require browserify and watchify from the parent so that their versions are
 // not tied to gulp-watchify
@@ -87,7 +87,7 @@ module.exports = function(opts) {
       entries: entries,
     }), 'watch', 'filename')
 
-    bundler = watchify(browserify(opts))
+    var bundler = watchify(browserify(browserifyOpts))
     stream.emit('prebundle', bundler)
 
 		// Compile files once, as well as whenever the bundle changes
