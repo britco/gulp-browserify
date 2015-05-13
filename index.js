@@ -78,7 +78,7 @@ module.exports = function(opts) {
 
   opts = _.defaults(opts, {watch: false, filename: 'app.js'})
 
-  stream = eventStream.writeArray(function(err, files) {
+  var stream = eventStream.writeArray(function(err, files) {
     var entries = _.pluck(files, 'path')
 
     var browserifyOpts = _.omit(_.extend(opts, {
